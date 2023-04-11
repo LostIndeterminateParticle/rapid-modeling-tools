@@ -40,13 +40,51 @@ try {
 
 	verification_log = new ArrayList<String>();
 
+	//Specify mapping between application versions and player piano variants to ensure API compatibility
+	//Add versions known to be compatible as they are tested
+	version_mapping = [
+		['app': '19.0', 'patch': 'SP4', 'playerpiano': 'pre2021x'],
+		['app': '2021x', 'patch': '', 'playerpiano': '2021xplus'],
+		['app': '2021x', 'patch': 'Refresh1', 'playerpiano': '2021xplus'],
+		['app': '2021x', 'patch': 'Refresh2', 'playerpiano': '2021xplus']
+	]
+
 	// get hooks into MagicDraw for use later
 	live_app = com.nomagic.magicdraw.core.Application.getInstance();
 	live_log = live_app.getGUILog();
 	live_project = live_app.getProject();
 
+
+	// Identify MagicDraw version
+	version = com.nomagic.magicdraw.core.Application.runtime().getVersion();
+	full_version = com.nomagic.magicdraw.core.Application.runtime().getFullVersion();
+	execution_status_log.add('Application version is: ' + version)
+	// Identify patch version
+	if (version != full_version) {
+		patch_version = full_version.split()[1];
+	} else {
+		patch_version = "";
+	}
+	execution_status_log.add('Application patch version is: ' + patch_version)
+
+	//use version information to select player piano variant
+	player_piano_variant = null
+	for (m in version_mapping) {
+		if (m['app'].equals(version) && m['patch'].equals(patch_version)) {
+			player_piano_variant = m['playerpiano']
+		}
+	}
+	if (player_piano_variant == null) {
+		execution_status_log.add('Current application version not defined in Player Piano. ' +
+			'Check that desired application is defined in version_mapping.')
+	} else {
+		execution_status_log.add('Player Piano variant for the current application version is: ' +
+			player_piano_variant)
+	}
+	
 	//grab all profiles in the project to help with identifying stereotypes
 	all_profiles = StereotypesHelper.getAllProfiles(live_project)
+
 
 	// dictionary to hold the ids discovered as we go
 	temp_ids = {};
@@ -1377,27 +1415,27 @@ finally {
 	// uncomment below to expose detailed logs
 	live_log.log('Execution steps:');
 	for (entry in execution_status_log) {
-		 //live_log.log(entry);
+		live_log.log(entry);
 	}
 	live_log.log('Elements processed:');
 	for (entry in command_processing_log) {
-		 //live_log.log(entry);
+		live_log.log(entry);
 	}
 	live_log.log('Element creation commands:');
 	for (entry in create_log) {
-		 //live_log.log(entry);
+		live_log.log(entry);
 	}
 	live_log.log('Relationship replace commands:');
 	for (entry in replace_log) {
-		 //live_log.log(entry);
+		live_log.log(entry);
 	}
 	live_log.log('Element rename commands:');
 	for (entry in rename_log) {
-		 //live_log.log(entry);
+		live_log.log(entry);
 	}
 	live_log.log('Verification Details:');
 	for (entry in verification_log) {
-		//live_log.log(entry);
+		live_log.log(entry);
 	}
 
 	// render created names and id's into a file for slotting into other files
