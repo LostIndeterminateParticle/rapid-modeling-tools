@@ -81,7 +81,7 @@ try {
 		execution_status_log.add('Player Piano variant for the current application version is: ' +
 			player_piano_variant)
 	}
-	
+
 	//grab all profiles in the project to help with identifying stereotypes
 	all_profiles = StereotypesHelper.getAllProfiles(live_project)
 
@@ -306,6 +306,7 @@ try {
 									new_val_literal.setValue(value_shortcuts[index]);
 								}
 
+								//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 								StereotypesHelper.createStereotypeInstance(new_val_prop);
 
 								ele_asi = new_val_prop.getAppliedStereotypeInstance();
@@ -608,19 +609,23 @@ try {
 
 									// apply the stereotype
 
-									apply_stereo = StereotypesHelper.getStereotype(live_project, 'ParticipantProperty');
+									//using null here (instead of directly referencing the SysML profile) is not super robust and would cause issues in a case where an additional profile also adds a ParticipantProperty Stereotype
+									apply_stereo = StereotypesHelper.getStereotype(live_project, 'ParticipantProperty', null); 
 
 									// element to get the slot defining feature from
 
 									com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper.addStereotype(ele_to_mod, apply_stereo);
 
+									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 									ele_asi = ele_to_mod.getAppliedStereotypeInstance();
 
+									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 									for (asi_class in ele_asi.getClassifier()) {
 										verification_log.add('Participant property stereotype classifier includes ' +
 											asi_class.getName() + ' for ' + item_to_edit_reported);
 									}
 
+									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 									StereotypesHelper.setStereotypePropertyValue(ele_to_mod,
 										apply_stereo, 'end', pp_element, true);
 
@@ -653,14 +658,17 @@ try {
 
 								   // apply the stereotype
 
-								   apply_stereo = StereotypesHelper.getStereotype(live_project, 'NestedConnectorEnd');
+								   //using null here (instead of directly referencing the SysML profile) is not super robust and would cause issues in a case where an additional profile also adds a NestedConnectorEnd Stereotype
+								   apply_stereo = StereotypesHelper.getStereotype(live_project, 'NestedConnectorEnd', null);
 
 								   // element to get the slot defining feature from
 
 								   com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper.addStereotype(ele_to_mod, apply_stereo);
 
+								   //DIFFERENCE BETWEEN pre2021x AND 2021xplus
 								   ele_asi = ele_to_mod.getAppliedStereotypeInstance();
 
+								   //DIFFERENCE BETWEEN pre2021x AND 2021xplus
 								   for (asi_class in ele_asi.getClassifier()) {
 								       verification_log.add('Property Path owning stereotype classifier includes ' +
 								   asi_class.getName() + ' for ' + item_to_edit_reported);
@@ -675,13 +683,16 @@ try {
 
 									verification_log.add("element value list is of Java class " + element_value_list.toArray().getClass());
 
+									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 									StereotypesHelper.setStereotypePropertyValue(ele_to_mod,
 										apply_stereo, 'propertyPath', element_value_list.toArray(), true);
 
+									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 									verification_log.add('Trying to apply value for ' +
 										com.nomagic.magicdraw.sysml.util.SysMLProfile.ELEMENTPROPERTYPATH_PROPERTYPATH_PROPERTY +
 										' on stereotype ' + apply_stereo.getName() + ' on end with role ' + item_to_edit_reported);
 
+									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 								    for (asi_slot in ele_asi.getSlot()) {
 									    verification_log.add('Property path ASI includes slot ' + asi_slot.
 											getDefiningFeature().getName());
@@ -848,6 +859,7 @@ try {
 									// End of new stereotype definition
 									// =======================================
 								default:
+									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 									execution_status_log.add("Processing attribute: " + attribute_to_hit);
 									key_member = null;
 									key_member_found = false;
@@ -882,6 +894,7 @@ try {
 
 										if (key_member_found) {
 
+											//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 											for (slot_to_check in ele_asi.getSlot()) {
 
 												if (slot_to_check.getDefiningFeature().getName() == attribute_to_hit) {
@@ -1002,7 +1015,7 @@ try {
 						if (op_to_execute['stereotype'] != null) {
 							/*
 							This will return a list of dictionaries, e.g. 
-							"stereotype" : [{"stereotype" : "Block", "profile" : "_15_001...."}]
+							"stereotype" : [{"stereotype" : "Block", "profile" : "SysML"}]
 							*/
 							new_stereo = op_to_execute['stereotype']
 						}
@@ -1206,15 +1219,18 @@ try {
 
 							if (new_stereo != null && new_stereo != "") {
 
+								//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 								StereotypesHelper.createStereotypeInstance(new_element);
 
 								//execution_status_log.add("Made stereotype instance for " + new_name);
 
+								//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 								ele_asi = new_element.getAppliedStereotypeInstance();
 
 								//execution_status_log.add("Retrieved stereotype instance for " + new_name +
 								//	"(" + ele_asi.toString() + ")");
 
+								//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 								class_list = ele_asi.getClassifier();
 
 								//need to iterate over each stereotype dictionary to get stereotype name and profile id
@@ -1226,9 +1242,9 @@ try {
 									profile_name = stereo_dict['profile']
 									profile = null
 									all_profiles.each { prof ->
-										if(prof.getName() == profile_name) {
+										if(prof.getName().equals(profile_name)) {
 											profile = prof
-										} else if(prof.getQualifiedName() == profile_name) {
+										} else if(prof.getQualifiedName().equals(profile_name)) {
 											profile = prof
 										}
 									}
@@ -1243,11 +1259,12 @@ try {
 									//get the stereotype object to apply
 									apply_stereo = StereotypesHelper.getStereotype(live_project, stereo_name, profile) 
 
+									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 									//add the stereotype to the list of classifiers for the applied stereotype instance
 									class_list.add(apply_stereo)
 
 									// if stereotype is a particular SysML stereotype, see if it is generating additional elements
-
+									//SysML AssociationBlock
 									if (stereo_name.equals("Block") && new_assoc) {
 										execution_status_log.add("Making AssociationBlock");
 										for (attr in new_element.getOwnedAttribute()) {
@@ -1255,7 +1272,7 @@ try {
 										}
 										assocs_to_clean.add(new_element);
 									}
-
+									//SysML ParticipantProperty
 									if (stereo_name.equals("ParticipantProperty") && new_prop) {
 										execution_status_log.add("Making ParticipantProperty");
 										pps_to_save.add(new_element);
@@ -1270,8 +1287,10 @@ try {
 								stereo_path = op_to_execute['path'];
 								stereo_value = op_to_execute['value'];
 
+								//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 								execution_status_log.add('These are the stereotypes to apply: ' + class_list)
 
+								//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 								com.nomagic.uml2.ext.jmi.helpers.InstanceSpecificationHelper.setClassifierForInstanceSpecification(
 									class_list, ele_asi, true);
 
