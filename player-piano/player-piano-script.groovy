@@ -43,7 +43,7 @@ try {
 	//Specify mapping between application versions and player piano variants to ensure API compatibility
 	//Add versions known to be compatible as they are tested
 	version_mapping = [
-		['app': '18.5', 'patch': 'FR', 'playerpiano': 'pre2021x'], //UNTESTED
+		['app': '18.5', 'patch': 'FR', 'playerpiano': 'pre2021x'], //UNTESTED (18.5 FR is the oldest version still listed through the version menu at https://jdocs.nomagic.com/)
 		['app': '19.0', 'patch': '', 'playerpiano': 'pre2021x'], //UNTESTED
 		['app': '19.0', 'patch': 'SP1', 'playerpiano': 'pre2021x'], //UNTESTED
 		['app': '19.0', 'patch': 'SP2', 'playerpiano': 'pre2021x'], //UNTESTED
@@ -52,7 +52,8 @@ try {
 		['app': '2021x', 'patch': '', 'playerpiano': '2021xplus'],
 		['app': '2021x', 'patch': 'Refresh1', 'playerpiano': '2021xplus'], //UNTESTED
 		['app': '2021x', 'patch': 'Refresh2', 'playerpiano': '2021xplus'],
-		['app': '2022x', 'patch': '', 'playerpiano': '2021xplus'] //UNTESTED
+		['app': '2022x', 'patch': '', 'playerpiano': '2021xplus'], //UNTESTED
+		['app': '2022x', 'patch': 'Refresh1', 'playerpiano': '2021xplus'] //UNTESTED
 	]
 
 	// get hooks into MagicDraw for use later
@@ -649,6 +650,7 @@ try {
 									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 									switch (player_piano_variant) {
 										case 'pre2021x':
+											//TODO AJ: test this section now that things have been split up
 											ele_asi = ele_to_mod.getAppliedStereotypeInstance();
 
 											for (asi_class in ele_asi.getClassifier()) {
@@ -657,6 +659,7 @@ try {
 											}
 											break;
 										case '2021xplus':
+											//TODO AJ: test this section now that things have been split up
 											ele_as = ele_to_mod.getAppliedStereotype();
 
 											for (as_class in ele_as.getClassifier()) {
@@ -707,43 +710,46 @@ try {
 
 									com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper.addStereotype(ele_to_mod, apply_stereo);
 
+									//moved this up b/c it is common to pre2021x and 2021xplus
+									for (prop_path_step in element_path_list){
+										ele_value = ele_factory.createElementValueInstance();
+										ele_value.setElement(prop_path_step);
+										element_value_list.add(ele_value);
+										verification_log.add("Element value points to " + ele_value.getElement().getHumanName());
+									}
+
+									verification_log.add("element value list is of Java class " + element_value_list.toArray().getClass());
+
+									// I'm not sure why it was decided to write this line like this... what is:
+									// com.nomagic.magicdraw.sysml.util.SysMLProfile.ELEMENTPROPERTYPATH_PROPERTYPATH_PROPERTY
+									// doing here?
+									verification_log.add('Trying to apply value for ' +
+										com.nomagic.magicdraw.sysml.util.SysMLProfile.ELEMENTPROPERTYPATH_PROPERTYPATH_PROPERTY +
+										' on stereotype ' + apply_stereo.getName() + ' on end with role ' + item_to_edit_reported);
+
+									StereotypesHelper.setStereotypePropertyValue(ele_to_mod,
+										apply_stereo, 'propertyPath', element_value_list.toArray(), true);
+
 									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 									switch (player_piano_variant) {
 										case 'pre2021x':
+											//TODO AJ: test this section now that things have been split up
 											ele_asi = ele_to_mod.getAppliedStereotypeInstance();
 
-											//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 											for (asi_class in ele_asi.getClassifier()) {
 												verification_log.add('Property Path owning stereotype classifier includes ' +
 											asi_class.getName() + ' for ' + item_to_edit_reported);
 											}
 
-											for (prop_path_step in element_path_list){
-												ele_value = ele_factory.createElementValueInstance();
-												ele_value.setElement(prop_path_step);
-												element_value_list.add(ele_value);
-												verification_log.add("Element value points to " + ele_value.getElement().getHumanName());
-											}
-
-											verification_log.add("element value list is of Java class " + element_value_list.toArray().getClass());
-
-											//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-											StereotypesHelper.setStereotypePropertyValue(ele_to_mod,
-												apply_stereo, 'propertyPath', element_value_list.toArray(), true);
-
-											//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-											verification_log.add('Trying to apply value for ' +
-												com.nomagic.magicdraw.sysml.util.SysMLProfile.ELEMENTPROPERTYPATH_PROPERTYPATH_PROPERTY +
-												' on stereotype ' + apply_stereo.getName() + ' on end with role ' + item_to_edit_reported);
-
-											//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 											for (asi_slot in ele_asi.getSlot()) {
-												verification_log.add('Property path ASI includes slot ' + asi_slot.
+												verification_log.add('Property Path ASI includes Slot ' + asi_slot.
 													getDefiningFeature().getName());
 												counter = 0;
 												for (val in asi_slot.getValue()) {
 													verification_log.add('Slot value includes ' +
 														val.getID());
+
+													//TODO AJ: check what the comment below is talking about (if I can figure it out...)
 
 													// for some reason, the element values placed by the stereotypes helper don't actually point to their elements;
 													// this is a patch
@@ -754,9 +760,38 @@ try {
 											}
 										break
 										case '2021xplus':
+											//TODO AJ: test this section now that things have been split up
+											ele.as = ele_to_mod.getAppliedStereotype();
 
+											//TODO AJ: I still need to check if this is a valid substitution for the pre2021x bit it replaces
+											for (as_class in ele_as.getClassifier()) {
+												verification_log.add('Property Path owning stereotype classifier includes ' +
+											as_class.getName() + ' for ' + item_to_edit_reported);
+											}
+
+											//I *think* that TaggedValues are what I want to deal with here for 2021xplus (to replace the slots on ASI's)
+											//If not that, I think it would be something else with properties
+											// yeah wait... I think I care about the property **defining** the TaggedValue
+											for (as_tagval in ele_as.getTaggedValue()) {
+												verification_log.add('Property Path stereotype includes Tagged Value ' + 
+													as_tagval.getTagDefinition.getHumanName()); //TODO AJ: Need to check if this statement makes sense as modified from above
+												//TODO AJ: figure out if the "counter" stuff is still needed (see above) -> start by quickly checking for related nomagic version documentation
+												//counter = 0;
+												//For the update to this loop, I *think* I now care about the value of the Tagged Value
+												for (val in as_tagval.getValue()) {
+													verification_log.add('Tagged Value includes value ' +
+														val.getID())
+
+													//// for some reason, the element values placed by the stereotypes helper don't actually point to their elements;
+													//// this is a patch
+													//val.setElement(element_path_list.get(counter))
+													//counter++;
+													verification_log.add('Value includes element ' + val.getElement().getHumanName());
+												}
+											}
 										break
 									}
+
 
 									break;
 								case 'redefines':
