@@ -43,10 +43,16 @@ try {
 	//Specify mapping between application versions and player piano variants to ensure API compatibility
 	//Add versions known to be compatible as they are tested
 	version_mapping = [
+		['app': '18.5', 'patch': 'FR', 'playerpiano': 'pre2021x'], //UNTESTED
+		['app': '19.0', 'patch': '', 'playerpiano': 'pre2021x'], //UNTESTED
+		['app': '19.0', 'patch': 'SP1', 'playerpiano': 'pre2021x'], //UNTESTED
+		['app': '19.0', 'patch': 'SP2', 'playerpiano': 'pre2021x'], //UNTESTED
+		['app': '19.0', 'patch': 'SP3', 'playerpiano': 'pre2021x'], //UNTESTED
 		['app': '19.0', 'patch': 'SP4', 'playerpiano': 'pre2021x'],
 		['app': '2021x', 'patch': '', 'playerpiano': '2021xplus'],
-		['app': '2021x', 'patch': 'Refresh1', 'playerpiano': '2021xplus'],
-		['app': '2021x', 'patch': 'Refresh2', 'playerpiano': '2021xplus']
+		['app': '2021x', 'patch': 'Refresh1', 'playerpiano': '2021xplus'], //UNTESTED
+		['app': '2021x', 'patch': 'Refresh2', 'playerpiano': '2021xplus'],
+		['app': '2022x', 'patch': '', 'playerpiano': '2021xplus'] //UNTESTED
 	]
 
 	// get hooks into MagicDraw for use later
@@ -75,8 +81,12 @@ try {
 		}
 	}
 	if (player_piano_variant == null) {
-		execution_status_log.add('Current application version not defined in Player Piano. ' +
+		execution_status_log.add('Current application version, ' + full_version +
+			', not defined in Player Piano. ' +
 			'Check that desired application is defined in version_mapping.')
+	} else if (player_piano_variant.equals('UNSUPPORTED')) {
+		execution_status_log.add('Current application version, ' + full_version +
+			', identified as unsupported by Player Piano.')
 	} else {
 		execution_status_log.add('Player Piano variant for the current application version is: ' +
 			player_piano_variant)
@@ -179,7 +189,8 @@ try {
 		changes_to_make = null;
 
 		try {
-			// Groovy has a really nice JSON facility built-in it appears.
+			// As of 2021x Refresh1, JsonSlurper is not included with the version of Groovy included in Magicdraw/Cameo
+			// but it can be added in manually
 
 			jsonSlurper = new JsonSlurper();
 			execution_status_log.add('JSON parser created.');
@@ -306,17 +317,36 @@ try {
 									new_val_literal.setValue(value_shortcuts[index]);
 								}
 
-								//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-								StereotypesHelper.createStereotypeInstance(new_val_prop);
-
-								ele_asi = new_val_prop.getAppliedStereotypeInstance();
-
-								class_list = ele_asi.getClassifier();
-								apply_stereo = StereotypesHelper.getStereotype(live_project, 'ValueProperty');
+								//Moved ahead of stuff below since it isn't different pre and post 2021x
+								//using null here (instead of directly referencing the MD Customization for SysML::additional_stereotypes profile) is not super robust and would cause issues in a case where an additional profile also adds a ValueProperty Stereotype
+								apply_stereo = StereotypesHelper.getStereotype(live_project, 'ValueProperty', null);
 
 								live_log.log('Found stereotype to apply ' + apply_stereo.getHumanName());
+								//DIFFERENCE BETWEEN pre2021x AND 2021xplus
+								// Current shipped patterns don't produce inputs that exerise this branch of Player Piano
+								switch(player_piano_variant) {
+									case 'pre2021x':
+										//TODO AJ: test that this move didn't break anything
+										// wait what does any of this even do? Does it do anything??
+										StereotypesHelper.createStereotypeInstance(new_val_prop);
 
-								class_list.add(apply_stereo);
+										ele_asi = new_val_prop.getAppliedStereotypeInstance();
+
+										class_list = ele_asi.getClassifier();
+										
+										class_list.add(apply_stereo);
+
+									break;
+									case '2021xplus':
+										//TODO AJ: write this part
+										// What, if anything, even needs to be done here?
+
+										//ele_as = new_val_prop.getAppliedStereotype();
+
+									break;
+									default:
+									break;
+								}
 							}
 						}
 
@@ -484,7 +514,7 @@ try {
 										item_to_edit_reported);
 									conj = op_to_execute['value'];
 									if (conj == 'true') {
-									   ele_to_mod.setConjugated(true);
+										ele_to_mod.setConjugated(true);
 									}
 									break;
 								case 'lower':
@@ -564,7 +594,7 @@ try {
 									homeless_new = [];
 									for (homeless in homeless_elements){
 										if (homeless_elements[homeless] == ele_to_mod) {
-										   // do nothing
+											// do nothing
 										}
 										else {
 											homeless_new.add(homeless_elements[homeless]);
@@ -617,99 +647,118 @@ try {
 									com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper.addStereotype(ele_to_mod, apply_stereo);
 
 									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-									ele_asi = ele_to_mod.getAppliedStereotypeInstance();
+									switch (player_piano_variant) {
+										case 'pre2021x':
+											ele_asi = ele_to_mod.getAppliedStereotypeInstance();
 
-									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-									for (asi_class in ele_asi.getClassifier()) {
-										verification_log.add('Participant property stereotype classifier includes ' +
-											asi_class.getName() + ' for ' + item_to_edit_reported);
+											for (asi_class in ele_asi.getClassifier()) {
+												verification_log.add('Participant property stereotype classifier includes ' +
+												asi_class.getName() + ' for ' + item_to_edit_reported);
+											}
+											break;
+										case '2021xplus':
+											ele_as = ele_to_mod.getAppliedStereotype();
+
+											for (as_class in ele_as.getClassifier()) {
+												verification_log.add('Participant property stereotype classifier includes ' +
+												as_class.getName() + ' for ' + item_to_edit_reported);
+											}
+											break;
+										default:
+											break
 									}
-
-									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 									StereotypesHelper.setStereotypePropertyValue(ele_to_mod,
 										apply_stereo, 'end', pp_element, true);
+									break;
 
 								case 'propertyPath':
-								   element_path_list = [];
-								   element_value_list = [];
+									element_path_list = [];
+									element_value_list = [];
 
-								   item_edited_value_reported = '';
+									item_edited_value_reported = '';
 
-								   verification_log.add('Deep verify property path for ' + item_to_edit_reported);
+									verification_log.add('Deep verify property path for ' + item_to_edit_reported);
 
-								   for (path_place in op_to_execute['value']) {
-									   ele_path = null;
+									for (path_place in op_to_execute['value']) {
+										ele_path = null;
 
-									   if (path_place.split('_')[0] == 'new') {
-										   ele_path = temp_elements[path_place];
-										   element_path_list.add(ele_path);
-									   }
-									   else {
-										   ele_path = live_project.getElementByID(path_place);
-										   element_path_list.add(ele_path);
-									   }
+										if (path_place.split('_')[0] == 'new') {
+											ele_path = temp_elements[path_place];
+											element_path_list.add(ele_path);
+										}
+										else {
+											ele_path = live_project.getElementByID(path_place);
+											element_path_list.add(ele_path);
+										}
 
-									   item_edited_value_reported = item_edited_value_reported +
+										item_edited_value_reported = item_edited_value_reported +
 											ele_path.getID() + '(' + ele_path.getHumanName() + '), ';
-								   }
+									}
 
-								   replace_log.add('(' + attribute_to_hit + ') Property path under ' + item_to_edit_reported + ' is replaced by ' +
+									replace_log.add('(' + attribute_to_hit + ') Property path under ' + item_to_edit_reported + ' is replaced by ' +
 										item_edited_value_reported);
 
-								   // apply the stereotype
+									// apply the stereotype
 
-								   //using null here (instead of directly referencing the SysML profile) is not super robust and would cause issues in a case where an additional profile also adds a NestedConnectorEnd Stereotype
-								   apply_stereo = StereotypesHelper.getStereotype(live_project, 'NestedConnectorEnd', null);
+									//using null here (instead of directly referencing the SysML profile) is not super robust and would cause issues in a case where an additional profile also adds a NestedConnectorEnd Stereotype
+									apply_stereo = StereotypesHelper.getStereotype(live_project, 'NestedConnectorEnd', null);
 
-								   // element to get the slot defining feature from
+									// element to get the slot defining feature from
 
-								   com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper.addStereotype(ele_to_mod, apply_stereo);
-
-								   //DIFFERENCE BETWEEN pre2021x AND 2021xplus
-								   ele_asi = ele_to_mod.getAppliedStereotypeInstance();
-
-								   //DIFFERENCE BETWEEN pre2021x AND 2021xplus
-								   for (asi_class in ele_asi.getClassifier()) {
-								       verification_log.add('Property Path owning stereotype classifier includes ' +
-								   asi_class.getName() + ' for ' + item_to_edit_reported);
-								   }
-
-								   for (prop_path_step in element_path_list){
-									   ele_value = ele_factory.createElementValueInstance();
-									   ele_value.setElement(prop_path_step);
-									   element_value_list.add(ele_value);
-									   verification_log.add("Element value points to " + ele_value.getElement().getHumanName());
-								   }
-
-									verification_log.add("element value list is of Java class " + element_value_list.toArray().getClass());
+									com.nomagic.uml2.ext.jmi.helpers.StereotypesHelper.addStereotype(ele_to_mod, apply_stereo);
 
 									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-									StereotypesHelper.setStereotypePropertyValue(ele_to_mod,
-										apply_stereo, 'propertyPath', element_value_list.toArray(), true);
+									switch (player_piano_variant) {
+										case 'pre2021x':
+											ele_asi = ele_to_mod.getAppliedStereotypeInstance();
 
-									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-									verification_log.add('Trying to apply value for ' +
-										com.nomagic.magicdraw.sysml.util.SysMLProfile.ELEMENTPROPERTYPATH_PROPERTYPATH_PROPERTY +
-										' on stereotype ' + apply_stereo.getName() + ' on end with role ' + item_to_edit_reported);
+											//DIFFERENCE BETWEEN pre2021x AND 2021xplus
+											for (asi_class in ele_asi.getClassifier()) {
+												verification_log.add('Property Path owning stereotype classifier includes ' +
+											asi_class.getName() + ' for ' + item_to_edit_reported);
+											}
 
-									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-								    for (asi_slot in ele_asi.getSlot()) {
-									    verification_log.add('Property path ASI includes slot ' + asi_slot.
-											getDefiningFeature().getName());
-										counter = 0;
-									    for (val in asi_slot.getValue()) {
-											verification_log.add('Slot value includes ' +
-												val.getID());
+											for (prop_path_step in element_path_list){
+												ele_value = ele_factory.createElementValueInstance();
+												ele_value.setElement(prop_path_step);
+												element_value_list.add(ele_value);
+												verification_log.add("Element value points to " + ele_value.getElement().getHumanName());
+											}
 
-											// for some reason, the element values placed by the stereotypes helper don't actually point to their elements;
-											// this is a patch
-											val.setElement(element_path_list.get(counter));
-											counter++;
-											verification_log.add('Value includes element ' + val.getElement().getHumanName());
-									    }
-								    }
+											verification_log.add("element value list is of Java class " + element_value_list.toArray().getClass());
 
-								   break;
+											//DIFFERENCE BETWEEN pre2021x AND 2021xplus
+											StereotypesHelper.setStereotypePropertyValue(ele_to_mod,
+												apply_stereo, 'propertyPath', element_value_list.toArray(), true);
+
+											//DIFFERENCE BETWEEN pre2021x AND 2021xplus
+											verification_log.add('Trying to apply value for ' +
+												com.nomagic.magicdraw.sysml.util.SysMLProfile.ELEMENTPROPERTYPATH_PROPERTYPATH_PROPERTY +
+												' on stereotype ' + apply_stereo.getName() + ' on end with role ' + item_to_edit_reported);
+
+											//DIFFERENCE BETWEEN pre2021x AND 2021xplus
+											for (asi_slot in ele_asi.getSlot()) {
+												verification_log.add('Property path ASI includes slot ' + asi_slot.
+													getDefiningFeature().getName());
+												counter = 0;
+												for (val in asi_slot.getValue()) {
+													verification_log.add('Slot value includes ' +
+														val.getID());
+
+													// for some reason, the element values placed by the stereotypes helper don't actually point to their elements;
+													// this is a patch
+													val.setElement(element_path_list.get(counter));
+													counter++;
+													verification_log.add('Value includes element ' + val.getElement().getHumanName());
+												}
+											}
+										break
+										case '2021xplus':
+
+										break
+									}
+
+									break;
 								case 'redefines':
 									redefined_element = null;
 									if (op_to_execute['value'].split('_')[0] == 'new') {
