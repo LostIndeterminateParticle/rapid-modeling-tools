@@ -324,7 +324,7 @@ try {
 
 								live_log.log('Found stereotype to apply ' + apply_stereo.getHumanName());
 								//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-								// Current shipped patterns don't produce inputs that exerise this branch of Player Piano
+								// Current shipped patterns don't produce inputs that exercise this branch of Player Piano
 								switch(player_piano_variant) {
 									case 'pre2021x':
 										//TODO AJ: test that this move didn't break anything
