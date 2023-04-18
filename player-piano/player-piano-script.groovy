@@ -763,32 +763,32 @@ try {
 											break
 										case '2021xplus':
 											//TODO AJ: test this section now that things have been split up
-											ele.as = ele_to_mod.getAppliedStereotype();
+											ele_as = ele_to_mod.getAppliedStereotype();
 
 											//TODO AJ: I still need to check if this is a valid substitution for the pre2021x bit it replaces
-											for (as_class in ele_as.getClassifier()) {
-												verification_log.add('Property Path owning stereotype classifier includes ' +
-											as_class.getName() + ' for ' + item_to_edit_reported);
-											}
+											for (st in ele_as){
+												verification_log.add('Property Path owning stereotype includes ' +
+													st.getName() + ' for ' + item_to_edit_reported)
 
-											//I *think* that TaggedValues are what I want to deal with here for 2021xplus (to replace the slots on ASI's)
-											//If not that, I think it would be something else with properties
-											// yeah wait... I think I care about the property **defining** the TaggedValue
-											for (as_tagval in ele_as.getTaggedValue()) {
-												verification_log.add('Property Path stereotype includes Tagged Value ' + 
-													as_tagval.getTagDefinition.getHumanName()); //TODO AJ: Need to check if this statement makes sense as modified from above
-												//Ok, so not that it means much but I looked at the docs back to 18.0 and none of them mentioned fixing an issue that would relate to what this counter bit is doing
-												//counter = 0;
-												//For the update to this loop, I *think* I now care about the value of the Tagged Value
-												for (val in as_tagval.getValue()) {
-													verification_log.add('Tagged Value includes value ' +
-														val.getID())
+												//I *think* that TaggedValues are what I want to deal with here for 2021xplus (to replace the slots on ASI's)
+												//If not that, I think it would be something else with properties
+												// yeah wait... I think I care about the property **defining** the TaggedValue
+												for (as_tagval in ele_as.getTaggedValue()) {
+													verification_log.add('Property Path stereotype includes Tagged Value ' + 
+														as_tagval.getTagDefinition.getHumanName()); //TODO AJ: Need to check if this statement makes sense as modified from above
+													//Ok, so not that it means much but I looked at the docs back to 18.0 and none of them mentioned fixing an issue that would relate to what this counter bit is doing
+													//counter = 0;
+													//For the update to this loop, I *think* I now care about the value of the Tagged Value
+													for (val in as_tagval.getValue()) {
+														verification_log.add('Tagged Value includes value ' +
+															val.getID())
 
-													//// for some reason, the element values placed by the stereotypes helper don't actually point to their elements;
-													//// this is a patch
-													//val.setElement(element_path_list.get(counter))
-													//counter++;
-													verification_log.add('Value includes element ' + val.getElement().getHumanName());
+														//// for some reason, the element values placed by the stereotypes helper don't actually point to their elements;
+														//// this is a patch
+														//val.setElement(element_path_list.get(counter))
+														//counter++;
+														verification_log.add('Value includes element ' + val.getElement().getHumanName());
+													}
 												}
 											}
 											break
@@ -946,10 +946,15 @@ try {
 									// =======================================
 								default:
 									// not a predefined location - look at applied Stereotypes
+
+									//Moving this out of the switch statement since it is common
+									execution_status_log.add("Processing attribute: " + attribute_to_hit);
+
+
 									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 									switch (player_piano_variant) {
 										case 'pre2021x':
-											execution_status_log.add("Processing attribute: " + attribute_to_hit);
+											
 											key_member = null;
 											key_member_found = false;
 											key_slot = null;
@@ -1068,8 +1073,31 @@ try {
 										case '2021xplus':
 											// TODO AJ: write this entire section for 2021xplus
 
+											//TBD if these are appropriate equivalents/reuses
+											key_member = null
+											key_member_found = false
+											key_tagval = null
+											key_tagval_found = false
 
 											try {
+												//might be able to move this out of the version switch statement by rearranging some things (and making some kind of intermediate variable)
+												for (ele_as in ele_to_mod.getAppliedStereotype()) {
+													//TBD If this is an appropriate equivalent/reuse
+													for (mem_to_check in ele_as.getMember()) {
+
+														execution_status_log.add('Discovered member: ' + mem_to_check.getName())
+
+														if(mem_to_check.getName() == attribute_to_hit) {
+															switch (op_to_execute['op']) {
+																case 'replace':
+																	key_member = mem_to_check
+																	key_member_found = true
+																	break
+															}
+														}
+													}													
+												}
+
 
 											} catch(Exception e) {
 
