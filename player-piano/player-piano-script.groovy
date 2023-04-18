@@ -328,7 +328,8 @@ try {
 								switch(player_piano_variant) {
 									case 'pre2021x':
 										//TODO AJ: test that this move didn't break anything
-										// wait what does any of this even do? Does it do anything??
+										// ok so it's just adding the stereotype grabbed above, apply_stereo, and adding it to the applied stereotype instance on the new element, new_val_prop (by adding it to the list of classifiers on the appplied stereotype instance)
+										// wait... maybe I'm missing something but couldn't they have just used StereotypesHelper.addStereotype()??? It very much existed when this was written
 										StereotypesHelper.createStereotypeInstance(new_val_prop);
 
 										ele_asi = new_val_prop.getAppliedStereotypeInstance();
@@ -337,16 +338,16 @@ try {
 										
 										class_list.add(apply_stereo);
 
-									break;
+										break;
 									case '2021xplus':
-										//TODO AJ: write this part
-										// What, if anything, even needs to be done here?
+										//TODO AJ: test that this does everything it should
+										// to replicate what was going on in previous versions, this just needs to apply the stereotype, apply_stereo, to the newly created element, new_val_prop
+										StereotypesHelper.addStereotype(new_val_prop,apply_stereo)
 
-										//ele_as = new_val_prop.getAppliedStereotype();
 
-									break;
+										break;
 									default:
-									break;
+										break;
 								}
 							}
 						}
@@ -662,9 +663,10 @@ try {
 											//TODO AJ: test this section now that things have been split up
 											ele_as = ele_to_mod.getAppliedStereotype();
 
-											for (as_class in ele_as.getClassifier()) {
-												verification_log.add('Participant property stereotype classifier includes ' +
-												as_class.getName() + ' for ' + item_to_edit_reported);
+											//Not sure there's a case where this would be a useful log message? Eh I guess at least it shows what elements are being interacted with
+											for (st in ele_as) {
+												verification_log.add('Participant property applied stereotypes include ' +
+													st.getName() + ' for ' + item_to_edit_reported)
 											}
 											break;
 										default:
@@ -758,7 +760,7 @@ try {
 													verification_log.add('Value includes element ' + val.getElement().getHumanName());
 												}
 											}
-										break
+											break
 										case '2021xplus':
 											//TODO AJ: test this section now that things have been split up
 											ele.as = ele_to_mod.getAppliedStereotype();
@@ -775,7 +777,7 @@ try {
 											for (as_tagval in ele_as.getTaggedValue()) {
 												verification_log.add('Property Path stereotype includes Tagged Value ' + 
 													as_tagval.getTagDefinition.getHumanName()); //TODO AJ: Need to check if this statement makes sense as modified from above
-												//TODO AJ: figure out if the "counter" stuff is still needed (see above) -> start by quickly checking for related nomagic version documentation
+												//Ok, so not that it means much but I looked at the docs back to 18.0 and none of them mentioned fixing an issue that would relate to what this counter bit is doing
 												//counter = 0;
 												//For the update to this loop, I *think* I now care about the value of the Tagged Value
 												for (val in as_tagval.getValue()) {
@@ -789,7 +791,7 @@ try {
 													verification_log.add('Value includes element ' + val.getElement().getHumanName());
 												}
 											}
-										break
+											break
 									}
 
 
@@ -979,6 +981,7 @@ try {
 										if (key_member_found) {
 
 											//DIFFERENCE BETWEEN pre2021x AND 2021xplus
+											// for 2021xplus, stereotype attributes are handled differently (use the StereotypesHelper/TagsHelper I think)
 											for (slot_to_check in ele_asi.getSlot()) {
 
 												if (slot_to_check.getDefiningFeature().getName() == attribute_to_hit) {
@@ -1059,7 +1062,7 @@ try {
 
 									}
 									break;
-								}
+							}
 						}
 						catch(Exception e) {
 							execution_status_log.add('Failed meta-attribute replace for ' + item_to_edit_reported +
@@ -1302,23 +1305,31 @@ try {
 							create_list.add([old_name, new_element]);
 
 							if (new_stereo != null && new_stereo != "") {
-
 								//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-								StereotypesHelper.createStereotypeInstance(new_element);
+								switch (player_piano_variant) {
+									case 'pre2021x':
+										//TODO AJ: test this section now that things have been split up
+										StereotypesHelper.createStereotypeInstance(new_element);
 
-								//execution_status_log.add("Made stereotype instance for " + new_name);
+										//execution_status_log.add("Made stereotype instance for " + new_name);
 
-								//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-								ele_asi = new_element.getAppliedStereotypeInstance();
+										ele_asi = new_element.getAppliedStereotypeInstance();
 
-								//execution_status_log.add("Retrieved stereotype instance for " + new_name +
-								//	"(" + ele_asi.toString() + ")");
+										//execution_status_log.add("Retrieved stereotype instance for " + new_name +
+										//	"(" + ele_asi.toString() + ")");
 
-								//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-								class_list = ele_asi.getClassifier();
+										class_list = ele_asi.getClassifier();
+										break
+									case '2021xplus':
+										//TODO AJ: test that this works
 
+										//I don't think anything is needed here in place of what is in pre2021x
+
+										break
+								}
+
+								//this is common to pre2021x and 2021xplus
 								//need to iterate over each stereotype dictionary to get stereotype name and profile id
-								
 								new_stereo.each { stereo_dict ->
 									//get stereotype
 									stereo_name = stereo_dict['stereotype']
@@ -1343,9 +1354,25 @@ try {
 									//get the stereotype object to apply
 									apply_stereo = StereotypesHelper.getStereotype(live_project, stereo_name, profile) 
 
+
 									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-									//add the stereotype to the list of classifiers for the applied stereotype instance
-									class_list.add(apply_stereo)
+									switch (player_piano_variant) {
+										case 'pre2021x':
+											//TODO AJ: test that things are working now that they've been broken up by version
+
+											//add the stereotype to the list of classifiers for the applied stereotype instance
+											class_list.add(apply_stereo)
+
+											break
+										case '2021xplus':
+											//TODO AJ: test that this does everything it should
+											// to replicate what was going on in previous versions, this just needs to apply the stereotype, apply_stereo, to the newly created element new_element
+											StereotypesHelper.addStereotype(new_element, apply_stereo)
+
+											execution_status_log.add('These are the stereotypes to apply: ' +  apply_stereo)
+
+											break
+									}
 
 									// if stereotype is a particular SysML stereotype, see if it is generating additional elements
 									//SysML AssociationBlock
@@ -1361,26 +1388,35 @@ try {
 										execution_status_log.add("Making ParticipantProperty");
 										pps_to_save.add(new_element);
 									}
-
 								}
 
 								//execution_status_log.add("Got stereotype " + new_stereo +  " from project");
 
 								// apply values to slots
-
 								stereo_path = op_to_execute['path'];
 								stereo_value = op_to_execute['value'];
+								// was there supposed to be more going on here? (as in with the "apply values to slots" statement?) neither of those two lines do anything at all... 
 
 								//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-								execution_status_log.add('These are the stereotypes to apply: ' + class_list)
+								switch (player_piano_variant) {
+									case 'pre2021x':
+										//TODO AJ: test that things are working now that they've been broken up by version
+										execution_status_log.add('These are the stereotypes to apply: ' + class_list)
 
-								//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-								com.nomagic.uml2.ext.jmi.helpers.InstanceSpecificationHelper.setClassifierForInstanceSpecification(
-									class_list, ele_asi, true);
+										//DIFFERENCE BETWEEN pre2021x AND 2021xplus
+										com.nomagic.uml2.ext.jmi.helpers.InstanceSpecificationHelper.setClassifierForInstanceSpecification(
+											class_list, ele_asi, true);
 
-								//execution_status_log.add("Instance specification helper done for " + new_stereo);
+										//execution_status_log.add("Instance specification helper done for " + new_stereo);
+										break
+									case '2021xplus':
+										//TODO AJ: test that this does everything it should (or doesn't in this case, I guess)
+										//nothing left to do here since the stereotypes have already been applied in 2021xplus
+
+										//execution_status_log.add("Stereotypes Helper done for " + new_stereo);
+										break
+								}
 							}
-
 						}
 						catch(Exception e) {
 							execution_status_log.add('Failed to create new element.');
