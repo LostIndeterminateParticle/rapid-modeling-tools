@@ -945,121 +945,139 @@ try {
 									// End of new stereotype definition
 									// =======================================
 								default:
-									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-									execution_status_log.add("Processing attribute: " + attribute_to_hit);
-									key_member = null;
-									key_member_found = false;
-									key_slot = null;
-									key_slot_found = false;
-									key_literal_found = false;
 									// not a predefined location - look at applied Stereotypes
-									try {
-										ele_asi = ele_to_mod.getAppliedStereotypeInstance();
-										execution_status_log.add('At ASI.');
-										// look at classifier in case there is no slot
-										for (class_to_check in ele_asi.getClassifier()) {
-											for (mem_to_check in class_to_check.getMember()) {
+									//DIFFERENCE BETWEEN pre2021x AND 2021xplus
+									switch (player_piano_variant) {
+										case 'pre2021x':
+											execution_status_log.add("Processing attribute: " + attribute_to_hit);
+											key_member = null;
+											key_member_found = false;
+											key_slot = null;
+											key_slot_found = false;
+											key_literal_found = false;
+											
+											try {
+												ele_asi = ele_to_mod.getAppliedStereotypeInstance();
+												execution_status_log.add('At ASI.');
+												// look at classifier in case there is no slot
+												for (class_to_check in ele_asi.getClassifier()) {
+													for (mem_to_check in class_to_check.getMember()) {
 
-												execution_status_log.add('Discovered member: ' + mem_to_check.getName());
+														execution_status_log.add('Discovered member: ' + mem_to_check.getName());
 
-												if (mem_to_check.getName() == attribute_to_hit) {
-													switch (op_to_execute['op']){
-														case 'replace':
-															key_member = mem_to_check;
-															key_member_found = true;
-															break;
-													}
-												}
-											}
-										}
-
-										replace_log.add('(' + attribute_to_hit + ') Setting tagged value ' + attribute_to_hit + ' on ' + item_to_edit_reported + ' to ' +
-											op_to_execute['value']);
-
-										// if a member has been matched to the path to replace, then see if there is a matching Slot
-
-										if (key_member_found) {
-
-											//DIFFERENCE BETWEEN pre2021x AND 2021xplus
-											// for 2021xplus, stereotype attributes are handled differently (use the StereotypesHelper/TagsHelper I think)
-											for (slot_to_check in ele_asi.getSlot()) {
-
-												if (slot_to_check.getDefiningFeature().getName() == attribute_to_hit) {
-													switch (op_to_execute['op']){
-														case 'replace':
-															key_slot_found = true;
-															key_slot = slot_to_check;
-															break;
-													}
-												}
-											}
-
-											// Create the slot and value
-											if (!key_slot_found) {
-												new_slot = ele_factory.createSlotInstance();
-												new_slot.owner = ele_asi;
-												new_slot.definingFeature = key_member;
-
-												// TODO: Decide whether to do literal Integer, Real, or String
-												raw_value = op_to_execute['value'];
-												new_lit_string = ele_factory.createLiteralStringInstance();
-												new_lit_string.owner = new_slot;
-												new_lit_string.value = raw_value;
-												new_slot.value = new_lit_string;
-											}
-											else {
-												val_found = false;
-												raw_value = op_to_execute['value'];
-												// check to see if the slot has a value
-												for (slot_val in key_slot.getValue()) {
-													// if the value is literal string, can simply overwrite string
-													if (slot_val instanceof LiteralString) {
-														val_found = true;
-
-														slot_val.setValue(raw_value);
-														live_log.log('Literal String found: ' + slot_val.getID());
-														live_log.log('Literal String value: ' + slot_val.getValue());
-													}
-													// if the target is an enumeration literal, then need to match valid literal
-													else if (slot_val instanceof InstanceValue) {
-														val_found = true;
-
-														key_instance = slot_val.getInstance();
-
-														if (key_instance instanceof EnumerationLiteral){
-															live_log.log('Enumerator is ' + key_instance.getEnumeration().getHumanName());
-															key_enum = key_instance.getEnumeration();
-															for (literal in key_enum.getOwnedLiteral()){
-																live_log.log('Enumerator includes ' + literal.getName());
-																if (literal.getName() == raw_value) {
-																	live_log.log('Matched enumeration literal ' + raw_value);
-																	slot_val.setInstance(literal);
-																}
+														if (mem_to_check.getName() == attribute_to_hit) {
+															switch (op_to_execute['op']){
+																case 'replace':
+																	key_member = mem_to_check;
+																	key_member_found = true;
+																	break;
 															}
 														}
-
-														live_log.log('Instance Value found: ' + slot_val.getID());
-														live_log.log('Instance Value instance: ' + key_instance.getHumanName());
 													}
 												}
-												if (!val_found) {
-													new_lit_string = ele_factory.createLiteralStringInstance();
-													new_lit_string.owner = key_slot;
-													new_lit_string.value = raw_value;
-													key_slot.value = new_lit_string;
+
+												replace_log.add('(' + attribute_to_hit + ') Setting tagged value ' + attribute_to_hit + ' on ' + item_to_edit_reported + ' to ' +
+													op_to_execute['value']);
+
+												// if a member has been matched to the path to replace, then see if there is a matching Slot
+
+												if (key_member_found) {
+
+													//DIFFERENCE BETWEEN pre2021x AND 2021xplus
+													// for 2021xplus, stereotype attributes are handled differently (use the StereotypesHelper/TagsHelper I think)
+													for (slot_to_check in ele_asi.getSlot()) {
+
+														if (slot_to_check.getDefiningFeature().getName() == attribute_to_hit) {
+															switch (op_to_execute['op']){
+																case 'replace':
+																	key_slot_found = true;
+																	key_slot = slot_to_check;
+																	break;
+															}
+														}
+													}
+
+													// Create the slot and value
+													if (!key_slot_found) {
+														new_slot = ele_factory.createSlotInstance();
+														new_slot.owner = ele_asi;
+														new_slot.definingFeature = key_member;
+
+														// TODO: Decide whether to do literal Integer, Real, or String
+														raw_value = op_to_execute['value'];
+														new_lit_string = ele_factory.createLiteralStringInstance();
+														new_lit_string.owner = new_slot;
+														new_lit_string.value = raw_value;
+														new_slot.value = new_lit_string;
+													}
+													else {
+														val_found = false;
+														raw_value = op_to_execute['value'];
+														// check to see if the slot has a value
+														for (slot_val in key_slot.getValue()) {
+															// if the value is literal string, can simply overwrite string
+															if (slot_val instanceof LiteralString) {
+																val_found = true;
+
+																slot_val.setValue(raw_value);
+																live_log.log('Literal String found: ' + slot_val.getID());
+																live_log.log('Literal String value: ' + slot_val.getValue());
+															}
+															// if the target is an enumeration literal, then need to match valid literal
+															else if (slot_val instanceof InstanceValue) {
+																val_found = true;
+
+																key_instance = slot_val.getInstance();
+
+																if (key_instance instanceof EnumerationLiteral){
+																	live_log.log('Enumerator is ' + key_instance.getEnumeration().getHumanName());
+																	key_enum = key_instance.getEnumeration();
+																	for (literal in key_enum.getOwnedLiteral()){
+																		live_log.log('Enumerator includes ' + literal.getName());
+																		if (literal.getName() == raw_value) {
+																			live_log.log('Matched enumeration literal ' + raw_value);
+																			slot_val.setInstance(literal);
+																		}
+																	}
+																}
+
+																live_log.log('Instance Value found: ' + slot_val.getID());
+																live_log.log('Instance Value instance: ' + key_instance.getHumanName());
+															}
+														}
+														if (!val_found) {
+															new_lit_string = ele_factory.createLiteralStringInstance();
+															new_lit_string.owner = key_slot;
+															new_lit_string.value = raw_value;
+															key_slot.value = new_lit_string;
+														}
+													}
 												}
 											}
-										}
-									}
-									catch(Exception e) {
-										execution_status_log.add("UNSUPPORTED ATTRIBUTE " + attribute_to_hit);
-										execution_status_log.add("Update switch case for new attribute.");
-										execution_status_log.add('Failed tagged value replace on ' +
-											item_to_edit_reported + ' for attribute ' + attribute_to_hit);
-										execution_status_log.add(e.getMessage());
-									}
-									finally {
+											catch(Exception e) {
+												execution_status_log.add("UNSUPPORTED ATTRIBUTE " + attribute_to_hit);
+												execution_status_log.add("Update switch case for new attribute.");
+												execution_status_log.add('Failed tagged value replace on ' +
+													item_to_edit_reported + ' for attribute ' + attribute_to_hit);
+												execution_status_log.add(e.getMessage());
+											}
+											finally {
 
+											}
+											break
+										case '2021xplus':
+											// TODO AJ: write this entire section for 2021xplus
+
+
+											try {
+
+											} catch(Exception e) {
+
+											}
+											finally {
+
+											}
+											break
 									}
 									break;
 							}
@@ -1403,7 +1421,6 @@ try {
 										//TODO AJ: test that things are working now that they've been broken up by version
 										execution_status_log.add('These are the stereotypes to apply: ' + class_list)
 
-										//DIFFERENCE BETWEEN pre2021x AND 2021xplus
 										com.nomagic.uml2.ext.jmi.helpers.InstanceSpecificationHelper.setClassifierForInstanceSpecification(
 											class_list, ele_asi, true);
 
