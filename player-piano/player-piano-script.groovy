@@ -971,6 +971,7 @@ try {
 														execution_status_log.add('Discovered member: ' + mem_to_check.getName());
 
 														if (mem_to_check.getName() == attribute_to_hit) {
+															//why are we checking op_to_execute['op'] again?? we couldn't be here if op wasn't already identified as 'replace'...
 															switch (op_to_execute['op']){
 																case 'replace':
 																	key_member = mem_to_check;
@@ -993,6 +994,7 @@ try {
 													for (slot_to_check in ele_asi.getSlot()) {
 
 														if (slot_to_check.getDefiningFeature().getName() == attribute_to_hit) {
+															//This switch case doesn't do anything, just copying the logic from the old code for now (see above)
 															switch (op_to_execute['op']){
 																case 'replace':
 																	key_slot_found = true;
@@ -1078,6 +1080,7 @@ try {
 											key_member_found = false
 											key_tagval = null
 											key_tagval_found = false
+											key_literal_found = false
 
 											try {
 												//might be able to move this out of the version switch statement by rearranging some things (and making some kind of intermediate variable)
@@ -1088,6 +1091,7 @@ try {
 														execution_status_log.add('Discovered member: ' + mem_to_check.getName())
 
 														if(mem_to_check.getName() == attribute_to_hit) {
+															//This switch case doesn't do anything, just copying the logic from the old code for now (see above)
 															switch (op_to_execute['op']) {
 																case 'replace':
 																	key_member = mem_to_check
@@ -1098,9 +1102,54 @@ try {
 													}													
 												}
 
+												//This can be pulled out of the version switch statement since no part of it is specific to each version
+												replace_log.add('(' + attribute_to_hit + ') Setting tagged value ' + attribute_to_hit + ' on ' 
+													+ item_to_edit_reported + ' to ' + op_to_execute['value']);
+
+												if (key_member_found) {
+													//TBD if this is an appropriate equivalent/reuse
+													for (tagval_to_check in ele.getTaggedValue()) {
+														//TBD if this is an appropriate equivalent/reuse
+														if (tagval_to_check.getTagDefinition().getName() == attribute_to_hit) {
+															switch (op_to_execute['op']){
+																//This switch case doesn't do anything, just copying the logic from the old code for now (see above)
+																case 'replace':
+																		key_tagval_found = true
+																		key_tagval = tagval_to_check
+																	break
+															}
+														}
+													}
+
+													//Create the tagged value and tagged value value (I think that is the equivalent at least)
+													if (!key_slot_found) {
+														//TODO AJ: FIGURE HOW TO FINISH PORTING THIS OVER TO 2021xplus
+														//new_tagval
+														//new_tagval
+														//new_tagval
+
+														//TODO: Decide whether to do literal Integer, Real, or String (this TODO is the same as in the pre2021x, since I'm mostly just copying the logic down here) 
+														//TODO AJ: FIGURE HOW TO FINISH PORTING THIS OVER TO 2021xplus
+														raw_value = op_to_execute['value']
+														//new_lit_string
+														//new_lit_string
+														//new_lit_string
+
+
+													} else {
+														//TODO AJ: FIGURE HOW TO FINISH PORTING THIS OVER TO 2021xplus
+														//
+														//
+														//
+													}
+												}
 
 											} catch(Exception e) {
-
+												execution_status_log.add("UNSUPPORTED ATTRIBUTE " + attribute_to_hit);
+												execution_status_log.add("Update switch case for new attribute.");
+												execution_status_log.add('Failed tagged value replace on ' +
+													item_to_edit_reported + ' for attribute ' + attribute_to_hit);
+												execution_status_log.add(e.getMessage());
 											}
 											finally {
 
